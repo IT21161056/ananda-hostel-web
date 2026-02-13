@@ -1,11 +1,12 @@
-import React, { FC, useEffect, useState } from "react";
+import { FC, useState } from "react";
 import {
   Search,
   Edit,
   Trash2,
-  MoreHorizontal,
   ChevronLeft,
   ChevronRight,
+  UserCheck,
+  UserX,
 } from "lucide-react";
 
 import { UserResponse } from "../../api/user/types";
@@ -14,9 +15,18 @@ interface Props {
   data?: UserResponse[];
   refetch: () => void;
   loading?: boolean;
+  onEditUser?: (user: UserResponse) => void;
+  onToggleStatus?: (user: UserResponse) => void;
+  onDeleteUser?: (user: UserResponse) => void;
 }
 
-const UsersTable: FC<Props> = ({ data = [], loading = false }) => {
+const UsersTable: FC<Props> = ({
+  data = [],
+  loading = false,
+  onEditUser,
+  onToggleStatus,
+  onDeleteUser,
+}) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const pageSizeOptions = [5, 10, 25, 50, 100];
@@ -59,19 +69,16 @@ const UsersTable: FC<Props> = ({ data = [], loading = false }) => {
     }
   };
 
-  // Stub: open edit modal
-  const openEditModal = (user: UserResponse) => {
-    // Implement modal logic here
-    alert(`Edit user: ${user.firstName} ${user.lastName}`);
+  const handleEditUser = (user: UserResponse) => {
+    onEditUser?.(user);
   };
 
-  // Stub: handle delete user
-  const handleDeleteUser = (userId: string) => {
-    // Implement delete logic here
-    if (window.confirm("Are you sure you want to delete this user?")) {
-      // TODO: Implement actual delete API call
-      console.log(`Delete user with ID: ${userId}`);
-    }
+  const handleToggleStatus = (user: UserResponse) => {
+    onToggleStatus?.(user);
+  };
+
+  const handleDeleteUser = (user: UserResponse) => {
+    onDeleteUser?.(user);
   };
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden relative mt-6">
@@ -127,6 +134,9 @@ const UsersTable: FC<Props> = ({ data = [], loading = false }) => {
                     />
                   </svg>
                 </button>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
               </th>
               <th className="px-6 py-3 text-left">
                 <button className="group inline-flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
@@ -209,13 +219,16 @@ const UsersTable: FC<Props> = ({ data = [], loading = false }) => {
                       <div className="h-6 bg-gray-200 rounded-full w-16"></div>
                     </td>
                     <td className="px-6 py-4">
+                      <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+                    </td>
+                    <td className="px-6 py-4">
                       <div className="h-4 bg-gray-200 rounded w-20"></div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="h-4 bg-gray-200 rounded w-20"></div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end space-x-2">
+                      <div className="flex items-center justify-end gap-1">
                         <div className="h-4 w-4 bg-gray-200 rounded"></div>
                         <div className="h-4 w-4 bg-gray-200 rounded"></div>
                         <div className="h-4 w-4 bg-gray-200 rounded"></div>
@@ -226,7 +239,7 @@ const UsersTable: FC<Props> = ({ data = [], loading = false }) => {
               </>
             ) : paginatedUsers.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
+                <td colSpan={7} className="px-6 py-12 text-center">
                   <div className="text-gray-500">
                     <Search className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                     <p className="text-lg font-medium">No users found</p>
@@ -249,10 +262,10 @@ const UsersTable: FC<Props> = ({ data = [], loading = false }) => {
                           user.role === "admin"
                             ? "bg-red-600"
                             : user.role === "warden"
-                            ? "bg-blue-600"
-                            : user.role === "lecturer"
-                            ? "bg-green-600"
-                            : "bg-gray-600"
+                              ? "bg-blue-600"
+                              : user.role === "lecturer"
+                                ? "bg-green-600"
+                                : "bg-gray-600"
                         }`}
                       >
                         <span className="text-sm font-medium text-white">
@@ -267,56 +280,83 @@ const UsersTable: FC<Props> = ({ data = [], loading = false }) => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                    <td className="px-6 py-4">
                     <div className="text-sm text-gray-900">{user.email}</div>
                   </td>
                   <td className="px-6 py-4">
                     <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        user.isActive !== false
+                          ? "bg-green-100 text-green-800 border border-green-600/30"
+                          : "bg-red-100 text-red-800 border border-red-600/30"
+                      }`}
+                    >
+                      {user.isActive !== false ? "Active" : "Inactive"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(
-                        user.role
+                        user.role,
                       )}`}
                     >
                       {getRoleLabel(user.role)}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
-                    {new Date().toLocaleDateString("en-US", {
-                      month: "numeric",
-                      day: "numeric",
-                      year: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                      hour12: true,
-                    })}
+                    {user.createdAt
+                      ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                          month: "numeric",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
+                        })
+                      : "N/A"}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
-                    {new Date().toLocaleDateString("en-US", {
-                      month: "numeric",
-                      day: "numeric",
-                      year: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                      hour12: true,
-                    })}
+                    {user.updatedAt
+                      ? new Date(user.updatedAt).toLocaleDateString("en-US", {
+                          month: "numeric",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
+                        })
+                      : "N/A"}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end space-x-2">
+                    <div className="flex items-center justify-end gap-1">
                       <button
-                        onClick={() => openEditModal(user)}
-                        className="text-blue-600 hover:text-blue-800 p-1 rounded transition-colors duration-150"
+                        onClick={() => handleEditUser(user)}
+                        className="text-blue-600 hover:text-blue-800 p-1.5 rounded transition-colors duration-150"
                         title="Edit User"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteUser(user._id!)}
-                        className="text-red-600 hover:text-red-800 p-1 rounded transition-colors duration-150"
-                        title="Delete User"
+                        onClick={() => handleToggleStatus(user)}
+                        className={`p-1.5 rounded transition-colors duration-150 ${
+                          user.isActive !== false
+                            ? "text-amber-600 hover:text-amber-800"
+                            : "text-green-600 hover:text-green-800"
+                        }`}
+                        title={user.isActive !== false ? "Deactivate User" : "Activate User"}
+                      >
+                        {user.isActive !== false ? (
+                          <UserX className="h-4 w-4" />
+                        ) : (
+                          <UserCheck className="h-4 w-4" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUser(user)}
+                        className="text-red-600 hover:text-red-800 p-1.5 rounded transition-colors duration-150"
+                        title="Permanently Delete User"
                       >
                         <Trash2 className="h-4 w-4" />
-                      </button>
-                      <button className="text-gray-400 hover:text-gray-600 p-1 rounded transition-colors duration-150">
-                        <MoreHorizontal className="h-4 w-4" />
                       </button>
                     </div>
                   </td>

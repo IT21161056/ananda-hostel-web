@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import StudentTable from "../components/Students/StudentTable";
 import AddStudentModal from "../components/Students/AddStudentModal";
-import { Student } from "../types";
+
 import { useGetAllStudents } from "../api/student";
 import { useAuth } from "../context/AuthContext";
 
@@ -19,7 +19,7 @@ export default function Students() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [filterHostel, setFilterHostel] = useState("");
   const [filterStatus, setFilterStatus] = useState<student_status>(
-    student_status.Active
+    student_status.Active,
   );
   const [selectedStudent, setSelectedStudent] = useState<
     StudentResponse | undefined
@@ -37,10 +37,10 @@ export default function Students() {
     return status;
   };
 
-  const handleAddStudent = (studentData: Omit<Student, "id">) => {
-    console.log("Adding new student:", studentData);
-    // This will be handled by the StudentTable component
-  };
+  // const handleAddStudent = (studentData: Omit<Student, "id">) => {
+  //   console.log("Adding new student:", studentData);
+  //   // This will be handled by the StudentTable component
+  // };
 
   const {
     data: studentData,

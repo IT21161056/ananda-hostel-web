@@ -13,6 +13,7 @@ import {
   StudentResponse,
 } from "../../api/student/types";
 import StudentDetailsModal from "./StudentDetailsModal";
+import DeleteConfirmationModal from "./DeleteConfirmationModal";
 import { useDeleteStudent } from "../../api/student";
 import { toast } from "react-toastify";
 
@@ -46,6 +47,10 @@ const StudentTable: FC<Props> = ({
   const [detailsStudent, setDetailsStudent] = useState<StudentResponse | null>(
     null
   );
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<StudentResponse | null>(
+    null
+  );
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   // Calculate pagination
@@ -76,10 +81,20 @@ const StudentTable: FC<Props> = ({
   };
 
   const handleDelete = (student: StudentResponse) => {
-    if (window.confirm(`Are you sure you want to delete ${student.name}?`)) {
-      deleteStudent(student._id);
-      setOpenDropdownId(null);
+    setStudentToDelete(student);
+    setIsDeleteModalOpen(true);
+    setOpenDropdownId(null);
+  };
+
+  const handleConfirmDelete = () => {
+    if (studentToDelete) {
+      deleteStudent(studentToDelete._id);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false);
+    setStudentToDelete(null);
   };
 
   const toggleDropdown = (studentId: string) => {
@@ -91,6 +106,8 @@ const StudentTable: FC<Props> = ({
     onSuccess: () => {
       toast.success("Student deleted successfully");
       refetch();
+      setIsDeleteModalOpen(false);
+      setStudentToDelete(null);
     },
     onError: (error) => {
       toast.error("Failed to delete student");
@@ -487,6 +504,14 @@ const StudentTable: FC<Props> = ({
           student={detailsStudent}
         />
       )}
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        student={studentToDelete}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 };

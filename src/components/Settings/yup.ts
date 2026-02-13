@@ -1,6 +1,7 @@
 import * as yup from "yup";
 
-const validationSchema = yup.object().shape({
+export const createValidationSchema = (isEdit: boolean = false) =>
+  yup.object().shape({
   firstName: yup
     .string()
     .required("First name is required")
@@ -34,40 +35,75 @@ const validationSchema = yup.object().shape({
 
   role: yup.string().required("Role is required"),
   // Replace 'otherRoles' with your actual role options
-  password: yup
-    .string()
-    .test(
-      "lowercase",
-      "Password must include at least one lowercase letter.",
-      (value) => !value || /[a-z]/.test(value)
-    )
-    .test(
-      "uppercase",
-      "Password must include at least one uppercase letter.",
-      (value) => !value || /[A-Z]/.test(value)
-    )
-    .test(
-      "number",
-      "Password must include at least one number.",
-      (value) => !value || /\d/.test(value)
-    )
-    .test(
-      "specialCharacter",
-      "Password must include at least one special character (@$!%*?&#).",
-      (value) => !value || /[@$!%*?&#]/.test(value)
-    )
-    .test(
-      "length",
-      "Password must be at least 8 characters long.",
-      (value) => !value || value.length >= 8
-    )
-    .required(),
+  password: isEdit
+      ? yup
+          .string()
+          .test(
+            "lowercase",
+            "Password must include at least one lowercase letter.",
+            (value) => !value || /[a-z]/.test(value)
+          )
+          .test(
+            "uppercase",
+            "Password must include at least one uppercase letter.",
+            (value) => !value || /[A-Z]/.test(value)
+          )
+          .test(
+            "number",
+            "Password must include at least one number.",
+            (value) => !value || /\d/.test(value)
+          )
+          .test(
+            "specialCharacter",
+            "Password must include at least one special character (@$!%*?&#).",
+            (value) => !value || /[@$!%*?&#]/.test(value)
+          )
+          .test(
+            "length",
+            "Password must be at least 8 characters long.",
+            (value) => !value || value.length >= 8
+          )
+          .optional()
+      : yup
+          .string()
+          .test(
+            "lowercase",
+            "Password must include at least one lowercase letter.",
+            (value) => !value || /[a-z]/.test(value)
+          )
+          .test(
+            "uppercase",
+            "Password must include at least one uppercase letter.",
+            (value) => !value || /[A-Z]/.test(value)
+          )
+          .test(
+            "number",
+            "Password must include at least one number.",
+            (value) => !value || /\d/.test(value)
+          )
+          .test(
+            "specialCharacter",
+            "Password must include at least one special character (@$!%*?&#).",
+            (value) => !value || /[@$!%*?&#]/.test(value)
+          )
+          .test(
+            "length",
+            "Password must be at least 8 characters long.",
+            (value) => !value || value.length >= 8
+          )
+          .required("Password is required"),
   confirmPassword: yup
-    .string()
-    .optional()
-    .oneOf([yup.ref("password")], "Passwords must match."),
-});
+      .string()
+      .when("password", {
+        is: (value: string) => value && value.length > 0,
+        then: (schema) =>
+          schema.oneOf([yup.ref("password")], "Passwords must match."),
+        otherwise: (schema) => schema.optional(),
+      }),
+  });
+
+const validationSchema = createValidationSchema(false);
 
 export default validationSchema;
 
-export type UserRegistration = yup.InferType<typeof validationSchema>;
+export type UserRegistration = yup.InferType<ReturnType<typeof createValidationSchema>>;

@@ -1,44 +1,16 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus, Search, Shield } from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
 import AddUserModal from "./AddUserModal";
+import UserConfirmModal, { ConfirmAction } from "./UserConfirmModal";
 import UsersTable from "./UsersTable";
 import { User } from "./types";
-import { useGetAllUsers } from "../../api/user";
+import { useGetAllUsers, useDeleteUser, useToggleUserStatus } from "../../api/user";
+import { UserResponse } from "../../api/user/types";
 import Input from "../elements/input/Input";
 import Select from "../elements/select/Select";
-
-// Mock users data (in real app, this would come from API)
-const mockUsers: User[] = [
-  {
-    id: "1",
-    firstName: "Admin",
-    lastName: "User",
-    email: "admin@ananda.edu",
-    nic: "123456789V",
-    phone: "0711234567",
-    role: "admin",
-  },
-  {
-    id: "2",
-    firstName: "Warden",
-    lastName: "Kumar",
-    email: "warden@ananda.edu",
-    nic: "987654321V",
-    phone: "0729876543",
-    role: "warden",
-  },
-  {
-    id: "3",
-    firstName: "Lakshmi",
-    lastName: "Perera",
-    email: "lecturer@ananda.edu",
-    nic: "456789123V",
-    phone: "0774567891",
-    role: "lecturer",
-  },
-];
+import { toast } from "react-toastify";
 
 const roles = [
   { label: "All users", value: "" },
@@ -50,12 +22,13 @@ const roles = [
 
 export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterRole, setFilterRole] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | undefined>();
   const [role, setRole] = useState(roles[0].value);
+  const [confirmModal, setConfirmModal] = useState<{
+    user: UserResponse;
+    action: ConfirmAction;
+  } | null>(null);
 
   const { hasPermission } = useAuth();
 
@@ -76,35 +49,73 @@ export default function UserManagement() {
 
   // Reset to first page when filters change
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterRole, pageSize]);
+    // This effect can be used for future pagination reset logic
+  }, [searchTerm, role]);
 
-  const handleAddUser = (userData: Omit<User, "id">) => {
-    // TODO: Implement actual API call to add user
-    console.log("Add user:", userData);
-    refetchUsers(); // Refresh the data after adding
+  const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser({
+    onSuccess() {
+      toast.success("User deleted successfully");
+      refetchUsers();
+      setConfirmModal(null);
+    },
+    onError(error: any) {
+      toast.error(error?.response?.data?.message || "Failed to delete user");
+    },
+  });
+
+  const { mutate: toggleUserStatus, isPending: isToggling } = useToggleUserStatus({
+    onSuccess() {
+      toast.success("User status updated successfully");
+      refetchUsers();
+      setConfirmModal(null);
+    },
+    onError(error: any) {
+      toast.error(error?.response?.data?.message || "Failed to update user status");
+    },
+  });
+
+  const handleToggleStatus = (user: UserResponse) => {
+    setConfirmModal({ user, action: "toggleStatus" });
   };
 
-  const handleEditUser = (userData: Omit<User, "id">) => {
-    if (editingUser) {
-      // TODO: Implement actual API call to edit user
-      console.log("Edit user:", userData);
-      setEditingUser(undefined);
-      refetchUsers(); // Refresh the data after editing
+  const handleDeleteUser = (user: UserResponse) => {
+    setConfirmModal({ user, action: "permanentDelete" });
+  };
+
+  const handleConfirmAction = () => {
+    if (!confirmModal) return;
+    if (confirmModal.action === "toggleStatus") {
+      toggleUserStatus(confirmModal.user._id);
+    } else {
+      deleteUser(confirmModal.user._id);
     }
   };
 
-  const handleDeleteUser = (userId: string) => {
-    if (confirm("Are you sure you want to delete this user?")) {
-      // TODO: Implement actual API call to delete user
-      console.log("Delete user:", userId);
-      refetchUsers(); // Refresh the data after deleting
-    }
+  // Convert UserResponse to User type for editing
+  const convertUserResponseToUser = (userResponse: UserResponse): User => {
+    return {
+      id: userResponse._id,
+      firstName: userResponse.firstName,
+      lastName: userResponse.lastName,
+      email: userResponse.email,
+      nic: userResponse.nic,
+      phone: userResponse.phone,
+      role: userResponse.role as "admin" | "warden" | "lecturer",
+    };
   };
 
-  const openEditModal = (user: User) => {
+  const openEditModal = (userResponse: UserResponse) => {
+    const user = convertUserResponseToUser(userResponse);
     setEditingUser(user);
     setIsAddModalOpen(true);
+  };
+
+  const handleAddUser = () => {
+    // This is handled by AddUserModal internally
+  };
+
+  const handleEditUser = () => {
+    // This is handled by AddUserModal internally
   };
 
   const closeAddModal = () => {
@@ -173,7 +184,20 @@ export default function UserManagement() {
       <UsersTable
         data={userData?.data}
         refetch={refetchUsers}
-        loading={isLoading}
+        loading={isLoading || isDeleting || isToggling}
+        onEditUser={openEditModal}
+        onToggleStatus={handleToggleStatus}
+        onDeleteUser={handleDeleteUser}
+      />
+
+      {/* Confirmation Modal */}
+      <UserConfirmModal
+        isOpen={!!confirmModal}
+        onClose={() => setConfirmModal(null)}
+        onConfirm={handleConfirmAction}
+        user={confirmModal?.user ?? null}
+        action={confirmModal?.action ?? "toggleStatus"}
+        isPending={isDeleting || isToggling}
       />
 
       {/* Add/Edit User Modal */}

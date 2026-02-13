@@ -48,9 +48,9 @@ const AttendanceHistoryTable = () => {
   };
 
   const handleViewDetails = (session: AttendanceSession) => {
-    navigate(
-      `/attendance/track?date=${session.date}&session=${session.session}`
-    );
+    // navigate(
+    //   `/attendance/track?date=${session.date}&session=${session.session}`,
+    // );
     setOpenDropdownId(null);
   };
 
@@ -226,9 +226,9 @@ const AttendanceHistoryTable = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {fetchingData ? (
-                // Skeleton loading rows (5 rows)
+                // Skeleton loading rows (8 rows)
                 <>
-                  {Array.from({ length: 5 }).map((_, index) => (
+                  {Array.from({ length: 8 }).map((_, index) => (
                     <tr key={`loading-${index}`} className="animate-pulse">
                       <td className="px-6 py-4">
                         <div className="h-4 bg-gray-200 rounded w-24"></div>

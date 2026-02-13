@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { X, Save, User, Mail, Shield, Eye, EyeOff, Phone } from "lucide-react";
+import { X, Save, User, Shield, Eye, EyeOff } from "lucide-react";
 import { User as UserType } from "./types";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import validationSchema, { UserRegistration } from "./yup";
+import { createValidationSchema, UserRegistration } from "./yup";
 import Input from "../elements/input/Input";
 import Select from "../elements/select/Select";
 import { useSignup } from "../../api/auth";
+import { useUpdateUser } from "../../api/user";
 import { toast } from "react-toastify";
 
 interface AddUserModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (user: Omit<UserType, "id"> & { password: string }) => void;
+  onSave: (user: Omit<UserType, "id"> & { password?: string }) => void;
   editUser?: UserType;
   refetch: () => void;
 }
@@ -20,22 +21,47 @@ interface AddUserModalProps {
 export default function AddUserModal({
   isOpen,
   onClose,
-  onSave,
   editUser,
   refetch,
 }: AddUserModalProps) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const isEditMode = !!editUser;
+
   const {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm({
-    resolver: yupResolver(validationSchema),
+    reset,
+    watch,
+  } = useForm<UserRegistration>({
+    resolver: yupResolver(createValidationSchema(isEditMode)),
     mode: "onChange",
+    defaultValues: isEditMode
+      ? {
+          firstName: editUser?.firstName || "",
+          lastName: editUser?.lastName || "",
+          email: editUser?.email || "",
+          nic: editUser?.nic || "",
+          phone: editUser?.phone || "",
+          role: editUser?.role || "",
+          password: "",
+          confirmPassword: "",
+        }
+      : {
+          firstName: "",
+          lastName: "",
+          email: "",
+          nic: "",
+          phone: "",
+          role: "",
+          password: "",
+          confirmPassword: "",
+        },
   });
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const password = watch("password");
 
   const roles = [
     { value: "admin", label: "Administrator" },
@@ -43,36 +69,102 @@ export default function AddUserModal({
     { value: "lecturer", label: "Lecturer" },
   ];
 
+  // Reset form when modal opens/closes or editUser changes
   useEffect(() => {
-    console.log("Errors >", errors);
-  }, [errors]);
+    if (isOpen) {
+      if (isEditMode && editUser) {
+        reset({
+          firstName: editUser.firstName || "",
+          lastName: editUser.lastName || "",
+          email: editUser.email || "",
+          nic: editUser.nic || "",
+          phone: editUser.phone || "",
+          role: editUser.role || "",
+          password: "",
+          confirmPassword: "",
+        });
+      } else {
+        reset({
+          firstName: "",
+          lastName: "",
+          email: "",
+          nic: "",
+          phone: "",
+          role: "",
+          password: "",
+          confirmPassword: "",
+        });
+      }
+      setShowPassword(false);
+      setShowConfirmPassword(false);
+    }
+  }, [isOpen, isEditMode, editUser, reset]);
 
   const { mutate: Signup, isPending: isPendingSignup } = useSignup({
     onSuccess() {
       onClose();
       refetch();
-      toast.success("User created succesfully");
+      toast.success("User created successfully");
     },
-    onError(error) {
-      toast.error("User create failed");
+    onError(error: any) {
+      toast.error(error?.response?.data?.message || "User creation failed");
+    },
+  });
+
+  const { mutate: updateUser, isPending: isPendingUpdate } = useUpdateUser({
+    id: editUser?.id || "",
+    onSuccess() {
+      onClose();
+      refetch();
+      toast.success("User updated successfully");
+    },
+    onError(error: any) {
+      toast.error(error?.response?.data?.message || "User update failed");
     },
   });
 
   const onSubmit = (formData: UserRegistration) => {
-    Signup(formData);
+    if (isEditMode && editUser?.id) {
+      // Update user - only send password if provided
+      const updateData: any = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        nic: formData.nic,
+        phone: formData.phone,
+        role: formData.role,
+      };
+
+      // Only include password if it was provided
+      if (formData.password && formData.password.length > 0) {
+        updateData.password = formData.password;
+      }
+
+      updateUser(updateData);
+    } else {
+      // Create new user
+      Signup(formData);
+    }
+  };
+
+  const handleClose = () => {
+    reset();
+    onClose();
   };
 
   if (!isOpen) return null;
+
+  const isPending = isPendingSignup || isPendingUpdate;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">
-            {editUser ? "Edit User" : "Add New User"}
+            {isEditMode ? "Edit User" : "Add New User"}
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
           >
             <X className="h-5 w-5" />
@@ -161,17 +253,28 @@ export default function AddUserModal({
               <Controller
                 control={control}
                 name="role"
-                render={({ field }) => <Select {...field} options={roles} />}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    options={roles}
+                    error={errors.role?.message}
+                  />
+                )}
               />
             </div>
           </div>
 
-          {/* Password Section (always shown) */}
+          {/* Password Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900 flex items-center">
               <Shield className="h-5 w-5 mr-2" />
               Security
             </h3>
+            {isEditMode && (
+              <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+                Leave password fields empty to keep the current password.
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative">
                 <Controller
@@ -182,9 +285,10 @@ export default function AddUserModal({
                       label="Password"
                       {...field}
                       type={showPassword ? "text" : "password"}
-                      required
-                      placeholder="Enter password"
-                      minLength={6}
+                      required={!isEditMode}
+                      placeholder={
+                        isEditMode ? "Leave empty to keep current" : "Enter password"
+                      }
                       error={errors.password?.message}
                     />
                   )}
@@ -211,10 +315,11 @@ export default function AddUserModal({
                     <Input
                       label="Confirm Password"
                       {...field}
-                      type={showPassword ? "text" : "password"}
-                      required
-                      placeholder="Enter password"
-                      minLength={6}
+                      type={showConfirmPassword ? "text" : "password"}
+                      required={!isEditMode && !!password}
+                      placeholder={
+                        isEditMode ? "Leave empty to keep current" : "Confirm password"
+                      }
                       error={errors.confirmPassword?.message}
                     />
                   )}
@@ -233,26 +338,36 @@ export default function AddUserModal({
               </div>
             </div>
 
-            <div className="text-sm text-gray-500">
-              Password must be at least 6 characters long
-            </div>
+            {!isEditMode && (
+              <div className="text-sm text-gray-500">
+                Password must be at least 8 characters long and include uppercase,
+                lowercase, number, and special character (@$!%*?&#).
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+              onClick={handleClose}
+              disabled={isPending}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
-              disabled={isPendingSignup}
+              disabled={isPending}
               type="submit"
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="h-4 w-4 mr-2" />
-              {editUser ? "Update User" : "Create User"}
+              {isPending
+                ? isEditMode
+                  ? "Updating..."
+                  : "Creating..."
+                : isEditMode
+                ? "Update User"
+                : "Create User"}
             </button>
           </div>
         </form>
