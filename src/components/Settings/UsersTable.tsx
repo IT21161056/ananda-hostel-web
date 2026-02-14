@@ -280,7 +280,7 @@ const UsersTable: FC<Props> = ({
                       </div>
                     </div>
                   </td>
-                    <td className="px-6 py-4">
+                  <td className="px-6 py-4">
                     <div className="text-sm text-gray-900">{user.email}</div>
                   </td>
                   <td className="px-6 py-4">
@@ -343,7 +343,11 @@ const UsersTable: FC<Props> = ({
                             ? "text-amber-600 hover:text-amber-800"
                             : "text-green-600 hover:text-green-800"
                         }`}
-                        title={user.isActive !== false ? "Deactivate User" : "Activate User"}
+                        title={
+                          user.isActive !== false
+                            ? "Deactivate User"
+                            : "Activate User"
+                        }
                       >
                         {user.isActive !== false ? (
                           <UserX className="h-4 w-4" />

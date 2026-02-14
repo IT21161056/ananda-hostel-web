@@ -39,16 +39,15 @@ interface AttendanceData {
 // Helper function to get local date in YYYY-MM-DD format
 const getLocalDateString = (date: Date = new Date()): string => {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
 
 export default function AttendanceTracker() {
   const navigate = useNavigate();
-  const [selectedDate, setSelectedDate] = useState<string>(
-    getLocalDateString()
-  );
+  const [selectedDate, setSelectedDate] =
+    useState<string>(getLocalDateString());
   const [selectedSession, setSelectedSession] =
     useState<SessionType>("morning");
   const [attendanceData, setAttendanceData] = useState<AttendanceData>({});
@@ -68,7 +67,7 @@ export default function AttendanceTracker() {
       date: selectedDate,
       sessionType: selectedSession,
     },
-    { enabled: false } // Don't auto-fetch, we'll trigger it manually
+    { enabled: false }, // Don't auto-fetch, we'll trigger it manually
   );
 
   // Check if attendance exists when date or session changes
@@ -83,8 +82,8 @@ export default function AttendanceTracker() {
           setAttendanceExists(true);
           toast.warning(
             `Attendance for ${selectedSession} session on ${new Date(
-              selectedDate
-            ).toLocaleDateString()} already exists. You can update or delete the existing record.`
+              selectedDate,
+            ).toLocaleDateString()} already exists. You can update or delete the existing record.`,
           );
         } else {
           setAttendanceExists(false);
@@ -112,7 +111,7 @@ export default function AttendanceTracker() {
               ...acc,
               [student.id]: "present",
             }),
-            {}
+            {},
           ),
         }));
       }
@@ -134,7 +133,7 @@ export default function AttendanceTracker() {
 
   const handleAttendanceChange = (
     studentId: string,
-    status: AttendanceStatus
+    status: AttendanceStatus,
   ): void => {
     const key = `${selectedDate}-${selectedSession}`;
     setAttendanceData((prev) => ({
@@ -174,7 +173,7 @@ export default function AttendanceTracker() {
           ({
             student: studentId,
             status,
-          } as StudentRecord)
+          }) as StudentRecord,
       ),
     };
 
@@ -190,13 +189,13 @@ export default function AttendanceTracker() {
 
     const current = getCurrentAttendance();
     const present = Object.values(current).filter(
-      (status) => status === "present"
+      (status) => status === "present",
     ).length;
     const absent = Object.values(current).filter(
-      (status) => status === "absent"
+      (status) => status === "absent",
     ).length;
     const leave = Object.values(current).filter(
-      (status) => status === "leave"
+      (status) => status === "leave",
     ).length;
 
     return { present, absent, leave, total: studentsData.data.length };
@@ -277,10 +276,10 @@ export default function AttendanceTracker() {
             {pendingAttendanceCreating
               ? "Saving..."
               : attendanceExists
-              ? "Attendance Exists"
-              : isChecking
-              ? "Checking..."
-              : "Save Attendance"}
+                ? "Attendance Exists"
+                : isChecking
+                  ? "Checking..."
+                  : "Save Attendance"}
           </button>
         </div>
 

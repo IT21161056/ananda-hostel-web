@@ -17,24 +17,28 @@ export const useSignup = ({ onSuccess, onError }: TUseSignup) =>
 
 // Login function
 export const login = async (
-  credentials: LoginCredentials
+  credentials: LoginCredentials,
 ): Promise<LoginResponse> => {
   const response = await axiosInstance.post<LoginResponse>(
     "/auth/login",
-    credentials
+    credentials,
+    { withCredentials: true },
   );
   return response.data;
 };
 
 // Logout function
 export const logout = async (): Promise<void> => {
-  await axiosInstance.post("/auth/logout");
+  await axiosInstance.post(
+    "/auth/logout",
+    {},
+    { withCredentials: true }, // ✅ Needed to send the cookie for clearing
+  );
 };
 
 // Refresh token function
 export const refreshToken = async (): Promise<RefreshTokenResponse> => {
-  const response = await axiosInstance.get<RefreshTokenResponse>(
-    "/auth/refresh"
-  );
+  const response =
+    await axiosInstance.get<RefreshTokenResponse>("/auth/refresh");
   return response.data;
 };

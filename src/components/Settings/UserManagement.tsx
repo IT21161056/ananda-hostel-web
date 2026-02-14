@@ -6,7 +6,11 @@ import AddUserModal from "./AddUserModal";
 import UserConfirmModal, { ConfirmAction } from "./UserConfirmModal";
 import UsersTable from "./UsersTable";
 import { User } from "./types";
-import { useGetAllUsers, useDeleteUser, useToggleUserStatus } from "../../api/user";
+import {
+  useGetAllUsers,
+  useDeleteUser,
+  useToggleUserStatus,
+} from "../../api/user";
 import { UserResponse } from "../../api/user/types";
 import Input from "../elements/input/Input";
 import Select from "../elements/select/Select";
@@ -38,7 +42,7 @@ export default function UserManagement() {
       search: searchTerm || undefined,
       role: role || undefined,
     }),
-    [searchTerm, role]
+    [searchTerm, role],
   );
 
   const {
@@ -63,16 +67,19 @@ export default function UserManagement() {
     },
   });
 
-  const { mutate: toggleUserStatus, isPending: isToggling } = useToggleUserStatus({
-    onSuccess() {
-      toast.success("User status updated successfully");
-      refetchUsers();
-      setConfirmModal(null);
-    },
-    onError(error: any) {
-      toast.error(error?.response?.data?.message || "Failed to update user status");
-    },
-  });
+  const { mutate: toggleUserStatus, isPending: isToggling } =
+    useToggleUserStatus({
+      onSuccess() {
+        toast.success("User status updated successfully");
+        refetchUsers();
+        setConfirmModal(null);
+      },
+      onError(error: any) {
+        toast.error(
+          error?.response?.data?.message || "Failed to update user status",
+        );
+      },
+    });
 
   const handleToggleStatus = (user: UserResponse) => {
     setConfirmModal({ user, action: "toggleStatus" });

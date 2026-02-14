@@ -45,12 +45,11 @@ const StudentTable: FC<Props> = ({
   // Modal states
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [detailsStudent, setDetailsStudent] = useState<StudentResponse | null>(
-    null
+    null,
   );
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [studentToDelete, setStudentToDelete] = useState<StudentResponse | null>(
-    null
-  );
+  const [studentToDelete, setStudentToDelete] =
+    useState<StudentResponse | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   // Calculate pagination

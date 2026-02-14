@@ -52,10 +52,7 @@ export default function DeleteConfirmationModal({
         <div className="p-6">
           <p className="text-gray-700 mb-4">
             Are you sure you want to delete student{" "}
-            <span className="font-semibold text-gray-900">
-              {student.name}
-            </span>
-            ?
+            <span className="font-semibold text-gray-900">{student.name}</span>?
           </p>
           <p className="text-sm text-gray-500 mb-6">
             This action cannot be undone. All data associated with this student

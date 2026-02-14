@@ -36,7 +36,10 @@ export default function UserConfirmModal({
       <span className="font-semibold text-gray-900">
         {user.firstName} {user.lastName}
       </span>
-      ? {isActive ? "They will not be able to log in until reactivated." : "They will be able to log in again."}
+      ?{" "}
+      {isActive
+        ? "They will not be able to log in until reactivated."
+        : "They will be able to log in again."}
     </>
   ) : (
     <>
@@ -53,7 +56,9 @@ export default function UserConfirmModal({
     : "This action cannot be undone. All data associated with this user will be permanently deleted.";
 
   const confirmLabel = isToggle
-    ? (isActive ? "Deactivate User" : "Activate User")
+    ? isActive
+      ? "Deactivate User"
+      : "Activate User"
     : "Delete Permanently";
 
   const headerColor = isToggle

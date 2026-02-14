@@ -28,7 +28,7 @@ export default function Attendance() {
             <ClipboardCheck className="h-4 w-4 mr-2" />
             Mark Attendance
           </button>
-          {/* <button
+          <button
             onClick={() => setActiveTab("reports")}
             className={`flex items-center px-6 py-4 text-sm font-medium border-b-2 transition-colors duration-200 ${
               activeTab === "reports"
@@ -38,7 +38,7 @@ export default function Attendance() {
           >
             <BarChart3 className="h-4 w-4 mr-2" />
             Reports & Analytics
-          </button> */}
+          </button>
         </div>
       </div>
 

@@ -27,10 +27,15 @@ type TUseToggleUserStatus = {
 export const useUpdateUser = ({ id, onSuccess, onError }: TUseUpdateUser) =>
   usePutRequest<UpdateUserBody>(`/users/${id}`, { onSuccess, onError });
 
-export const useToggleUserStatus = ({ onSuccess, onError }: TUseToggleUserStatus) =>
+export const useToggleUserStatus = ({
+  onSuccess,
+  onError,
+}: TUseToggleUserStatus) =>
   useMutation({
     mutationFn: (userId: string) =>
-      axiosInstance.patch(`/users/${userId}/status`, {}).then((res) => res.data),
+      axiosInstance
+        .patch(`/users/${userId}/status`, {})
+        .then((res) => res.data),
     onSuccess,
     onError,
   });
