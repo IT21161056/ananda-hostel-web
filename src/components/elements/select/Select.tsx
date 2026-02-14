@@ -5,12 +5,15 @@ interface Option {
   label: ReactNode;
 }
 
-interface SelectProps
-  extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "size"> {
+interface SelectProps extends Omit<
+  SelectHTMLAttributes<HTMLSelectElement>,
+  "size"
+> {
   label?: ReactNode;
   options: Option[];
   error?: string;
   loading?: boolean;
+  placeholder?: string;
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
@@ -22,9 +25,10 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
       loading,
       className = "w-full",
       required = false,
+      placeholder = "Select an option",
       ...props
     },
-    ref
+    ref,
   ) => (
     <div>
       {label && (
@@ -83,7 +87,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         <p className="mt-1 text-xs font-normal text-red-600">{error}</p>
       )}
     </div>
-  )
+  ),
 );
 
 Select.displayName = "Select";
